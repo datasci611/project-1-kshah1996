@@ -1,0 +1,182 @@
+---
+title: "Project 1"
+author: "Kushal Shah"
+date: "9/18/2018"
+output: html_document
+---
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(gridExtra)
+library(tidyr)
+library(datasets)
+library(carData)
+```
+
+
+## 1. Texas Housing Dataset
+
+```{r}
+texas <- txhousing
+```
+
+This dataset contains information about the Texas housing market from 2000-2015. The dataset is made up of 8602 observations, with each observation representing a city during a given month, and describing the total number of homes sold, value of sales, median sale price, and more. The original source for the data is the Texas A&M Real Estate Center.
+
+A driving question for this data set was - how has the total value of house sales in Texas (or `volume`) per month changed over time?
+
+### Summarizing the Dataset
+
+```{r}
+monthly_sales <- texas %>%
+  mutate(
+    day = 01,
+    date_format = as.Date(paste(year, month, day, sep="-"))
+  ) %>%
+  group_by(date_format) %>%
+  summarise(sales_value = sum(volume, na.rm = T),
+            median = mean(median, na.rm = T))
+
+yearly_median <- monthly_sales %>%
+  mutate(year = as.numeric(format(date_format, "%Y"))) %>%
+  group_by(year) %>%
+  summarise(median = mean(median, na.rm = T))
+```
+
+### Figure 1.1
+
+```{r}
+ggplot(monthly_sales, aes(x = date_format, y = sales_value)) +
+  geom_point() +
+  geom_smooth() +
+  ggtitle("Monthly Total Value of Texas House Sales") +
+  xlab("Month") +
+  ylab("Total Value of House Sales")
+```
+
+From this graph, we see that there is a general positive trend in monthly total sales value of Texas homes as time goes on. It is interesting to note, however, that for a period of time corresponding with the financial crisis (mid 2017 - 2010), the total value of sales of Texas homes decreased. After this dip, however, a positive trend continued which was even stronger than the one from 2000-2007.
+
+This led to another question - did the drop in total sales value of Texas homes correspond with changes in individual home prices?
+
+### Figure 1.2
+
+```{r}
+ggplot(yearly_median, aes(x = year, y = median)) +
+  geom_bar(stat = "identity") +
+  geom_smooth() +
+  ggtitle("Yearly Median Selling Price of Homes in Texas") +
+  xlab("Year") +
+  ylab("Median Home Price")
+```
+
+
+We can see from this figure that even during the drop in total value of Texas home sales during the financial crisis, the median price for houses on the market did not drop. However, prices did stagnate, making 2007-2009 the only period in which housing prices stayed relatively equal, whereas every other year saw an increase from the previous years. This makes us realize that the drop in total value of sales of Texas homes was not a result of housing price drops; rather, we can hypothesize that the value of sales drop was simply due to the fact that fewer homes were sold during this period.
+
+We can test this hypothesis with further analysis of the number of sales (or `sales`) by month or year. It would also be interesting to obtain latitude and longitude coordinates for the cites on the list and produce a heat map of the state, one map for each year of sales. Through these heat maps, we could track changes in Texas home sales on a local basis, which could provide further insight as to exactly which housing areas/markets within Texas were affected most by the financial crisis.
+
+
+## 2. Population Dataset
+
+This dataset contains information the population of all countries on earth for every year from 1995-2013. The dataset is made up of 4060 observations, with each row representing the population of one country during one year. We wanted to investigate whether the proportion of the world population living in the 6 most populated countries has changed over the years. Have people spread out, or remained concentrated in the same few countries?
+
+### Summarizing the Dataset
+
+```{r}
+pop <- tidyr::population
+
+world_pops <- pop %>%
+  group_by(year) %>%
+  summarise(world_population = sum(as.numeric(population), na.rm = TRUE))
+  
+pop_top6 <- pop %>%
+  left_join(world_pops, by = "year") %>%
+  group_by(year) %>%
+  top_n(n = 6, wt = population) %>%
+  mutate(prop = population/world_population) %>%
+  arrange(year)
+```
+
+
+### Figure 2.1
+
+```{r}
+ggplot(pop_top6) + 
+  geom_bar(aes(x = year, fill = as.factor(country), y = prop), stat = "identity") +
+  ggtitle("Proportion of World Living in the 6 Most Populated Countries") +
+  xlab("Year") +
+  ylab("Proportion of World Population") +
+  scale_fill_discrete(name="Country")
+```
+
+Interestingly enough, over the 18 years of population data covered by this dataset, the proportion of the world population living in the six most populated countries has not changed a lot, although there is an extremely slow decreasing trend. Over the years, this proportion has decreased from approximately 52% to 50%. One key takeaway from this graph, however, is that the proportion of the world's population that is living in China has slowly decreased over the years, while the proportion of world population living in India has slowly increased. Another takeaway is that in 2001, Pakistan's gradual population increase caused it to take over Russia as the 5th most populated country in the world, and it has remained this way ever since.
+
+It would be interesting to find data outside of the date range, perhaps from 1900-present, to view population trends in major countries over the last century; this view would surely have more countries going in and out of the Top 6, providing a historical perspective as well. In this way, we could track world population shifts due to industrialization, world wars, development of third world countries, and other key historical events.
+
+
+## 3. Storms Dataset
+
+This dataset contains information for hurricanes, tropical storms, and tropical depressions from the NOAA Atlantic hurricane database from 1975-2015. There are 10010 observations, with each observation corresponding to a hurricane at a certain time point and displaying its wind speed, category, pressure, location, etc. As someone who knows that the category of a storm is directly dependent on wind speed, I still knew nothing about how air pressure at the storm's center is related to wind speed / categorization. 
+
+### Summarizing the Dataset
+
+```{r}
+storms_max <- storms %>%
+  filter(category %in% c(1,2,3,4,5)) %>%
+  group_by(name, year) %>%
+  top_n(n = 1, wt = wind) %>%
+  top_n(n = 1, wt = lat) %>%
+  top_n(n = 1, wt = long)
+```
+
+The original dataset contained repetitive measurements for each storm (every six hours for each day above a certain wind speed threshold). I only wanted to look at each storm at its strongest point, so for each storm, I kept only the record with the highest wind speed. I also wanted to look at only hurricanes and tropical storms, so I removed tropical depressions that have a Category of -1.
+
+### Figure 3.1
+
+```{r}
+ggplot(storms_max, aes(x = pressure, fill = as.factor(category))) + 
+  geom_histogram(binwidth = 15) +
+  ggtitle("Storm Pressure Distribution, Labeled by Category") +
+  xlab("Air Pressure at Storm Center") +
+  ylab("Number of Storms") +
+  scale_fill_discrete(name="Storm Category")
+```
+
+Through this figure, we learn that air pressure is quite strongly related to categorization of the storm. Since categorization is defined based on wind speeds, this implies that air pressure and wind speeds are highly correlated. The distribution of storm air pressures is skewed to the left, indicating that it is more common to have higher air pressures (which correspond with lower categories of storms). Intuitively, this makes sense, as Cattegory 4 and Category 5 storms, which have higher wind speeds and lower pressure, are much more rare. We also see that for different subsets of pressure, different categorizations of storms are possible. For example, although values of pressure from 920-960 are generally on the lower end (corresponding to relatively higher wind speeds), the resulting wind speeds are still variable, resulting in storms that range from Category 1 to Category 5. As pressure decreases, however, the chances of a higher category hurricane increase.
+
+As a next step, it would be interesting to use the data to track whether the intensity of hurricanes has been increasing over the years (in terms of high wind speed and low pressure), and if so, determine the most vulnerable locations based on the given latitude and longitude data. Tracking these changes would provide insight as to the impact of climate change over the years.
+
+
+## 4. Survival of Passengers on the Titanic
+
+This dataset lists all 1309 passengers that were aboard the Titanic, along with their age, ticket price, class, survival, etc. The sinking of Titanic was one of the most significant catastrophes of the 20th century. I would like to know some details about the kinds of passengers that were likely to survive. Already knowing that the majority of females survived the disaster and the majority of males died, it would be interesting to track survival by age group within gender. This data is found across many sources, but for this R dataset, the source is Encyclopeida Titanica.
+
+### Summarizing the Dataset
+
+```{r}
+titanic <- carData::TitanicSurvival
+
+titanic <- titanic %>%
+  filter(!is.na(age)) %>%
+  mutate(age_group = ifelse(between(age,0,20),"0-20",ifelse(between(age,20,40),"20-40",ifelse(between(age,40,60),"40-60",ifelse(between(age,60,80),"60-80","60-80")))))
+```
+
+### Figure 4.1
+
+```{r}
+ggplot(titanic, aes(x=age_group, fill=survived)) + 
+  geom_bar(position="fill") + 
+  facet_wrap(~sex, nrow = 2) +
+  ggtitle("Proportion of Survivors by Gender and Age Group") +
+  xlab("Age Group") +
+  ylab("Proportion Surviving") +
+  scale_fill_discrete(name="Survived?")
+```
+
+
+The graphs of survival by age group within gender show a very interesting trend: male survival decreased as age increased, whereas female survival increased witha age. The age is seperated into four phases: 0-20, 20-40, 40-60 and 60-80.
+
+For males, we can easily observe that mortality was greater than surivial rate in each of these four age phases. As male age increaes, survival quickly decreases, with the worst-off group being males aged 60-80. The age phase which had the highest proportion of surviving males was 0-20, likely because these male children were placed on lifeboats along with women.
+
+For females, mortality was smaller than surival in each of these four age phases. Additionally, survival increases with age, likely because elderly females were placed on lifeboats first. The age phase that had the greatest proportion of surviving females was 60-80.
+
+These graphs provide interesting insight as to what must have happened the night of the Titanic's sinking. Since women were placed on lifeboats first, it is likely that the older/weakest women were prioritized, resulting in the high survival rate of older women. On the other hand, the majority of men were not placed on lifeboats (except for children, resulting in the higher survival of the 0-20 age group), resulting in the younger/stronger men being more able to fend for themselves than older men.
