@@ -94,6 +94,10 @@ pop_top6 <- pop %>%
   top_n(n = 6, wt = population) %>%
   mutate(prop = population/world_population) %>%
   arrange(year)
+
+data <- pop_top6 %>%
+  group_by(year) %>%
+  summarize(tot = sum(prop))
 ```
 
 
@@ -105,7 +109,9 @@ ggplot(pop_top6) +
   ggtitle("Proportion of World Living in the 6 Most Populated Countries") +
   xlab("Year") +
   ylab("Proportion of World Population") +
-  scale_fill_discrete(name="Country")
+  scale_fill_discrete(name="Country") +
+  annotate('text', label='1995: 51.9% of world', x=1997, y=.535, color='red', size = 3) +
+  annotate('text', label='2013: 50.3% of world', x=2011, y=.522, color='red', size = 3)
 ```
 
 Interestingly enough, over the 18 years of population data covered by this dataset, the proportion of the world population living in the six most populated countries has not changed a lot, although there is an extremely slow decreasing trend. Over the years, this proportion has decreased from approximately 52% to 50%. One key takeaway from this graph, however, is that the proportion of the world's population that is living in China has slowly decreased over the years, while the proportion of world population living in India has slowly increased. Another takeaway is that in 2001, Pakistan's gradual population increase caused it to take over Russia as the 5th most populated country in the world, and it has remained this way ever since.
