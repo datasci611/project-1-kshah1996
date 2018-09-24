@@ -51,7 +51,9 @@ ggplot(monthly_sales, aes(x = date_format, y = sales_value)) +
   geom_smooth() +
   ggtitle("Monthly Total Value of Texas House Sales") +
   xlab("Month") +
-  ylab("Total Value of House Sales")
+  ylab("Total Value of House Sales") +
+  annotate("rect", xmin = as.Date("2007-03-01"), xmax = as.Date("2010-03-01"), ymin = 2100000000, ymax = 7200000000, alpha = .2) +
+  annotate('text', label='Period of Decline\nin House Sales', x=as.Date("2008-12-15"), y=6800000000, color='red', size = 2.6)
 ```
 
 From this graph, we see that there is a general positive trend in monthly total sales value of Texas homes as time goes on. It is interesting to note, however, that for a period of time corresponding with the financial crisis (mid 2017 - 2010), the total value of sales of Texas homes decreased. After this dip, however, a positive trend continued which was even stronger than the one from 2000-2007.
