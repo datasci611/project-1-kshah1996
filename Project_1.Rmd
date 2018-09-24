@@ -186,7 +186,7 @@ ggplot(titanic, aes(x=age_group, fill=survived)) +
 ```
 
 
-The graphs of survival by age group within gender show a very interesting trend: male survival decreased as age increased, whereas female survival increased witha age. The age is seperated into four phases: 0-20, 20-40, 40-60 and 60-80.
+The graphs of survival by age group within gender show a very interesting trend: male survival decreased as age increased, whereas female survival increased with age. The age is seperated into four phases: 0-20, 20-40, 40-60 and 60-80.
 
 For males, we can easily observe that mortality was greater than surivial rate in each of these four age phases. As male age increaes, survival quickly decreases, with the worst-off group being males aged 60-80. The age phase which had the highest proportion of surviving males was 0-20, likely because these male children were placed on lifeboats along with women.
 
