@@ -5,7 +5,12 @@ date: "9/18/2018"
 output: html_document
 ---
 
-```{r}
+```{r include=FALSE}
+knitr::opts_chunk$set(message=FALSE, warning=FALSE)
+```
+
+
+```{r, warning = FALSE}
 library(dplyr)
 library(ggplot2)
 library(gridExtra)
