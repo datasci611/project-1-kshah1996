@@ -1,7 +1,7 @@
 ---
-title: "Project 1"
+title: "Project 1 - Analysis of R Datasets"
 author: "Kushal Shah"
-date: "9/18/2018"
+date: "9/24/2018"
 output: html_document
 ---
 
